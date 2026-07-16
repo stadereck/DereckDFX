@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Apple Music Player</title>
+    <title>deBÍ TiRAR LaS FOToS</title>
+    <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Apple_Music_icon.svg/3840px-Apple_Music_icon.svg.png" />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -65,8 +66,11 @@
         .animated-artist.strike::after {
             width: 100%;
         }
-        .animated-artist.fade-out {
+        .fade-out {
             opacity: 0;
+        }
+        .animated-album {
+            transition: opacity 0.4s ease-in-out;
         }
 
         /* Colores por defecto para móvil (Tema Oscuro) */
@@ -119,7 +123,7 @@
 
             <!-- Títulos e Info -->
             <div class="text-center mt-6 px-4">
-                <h1 class="text-3xl font-bold tracking-tight">deBÍ TiRAR LaS FOToS</h1>
+                <h1 class="text-3xl font-bold tracking-tight animated-album">deBÍ TiRAR LaS FOToS</h1>
                 <h2 class="text-[17px] text-gray-200 mt-1"><span class="animated-artist">Jeffrey Epstein & P. Diddy</span></h2>
                 <div class="text-[10px] text-gray-400 mt-2 flex items-center justify-center space-x-1 font-semibold tracking-widest uppercase">
                     <span>Latin</span><span>&middot;</span><span>2026</span><span>&middot;</span>
@@ -171,7 +175,7 @@
                 </div>
                 <div class="flex items-center space-x-4 pr-3">
                     <button onclick="toggleMobilePlay()" class="active:scale-90 transition-all text-white"><svg id="mobile-mini-play-icon" viewBox="0 0 24 24" class="w-7 h-7" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg></button>
-                    <button class="active:scale-90 transition-all text-white"><svg viewBox="0 0 24 24" class="w-7 h-7" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" /></svg></button>
+                    <button onclick="playNextTrack()" class="active:scale-90 transition-all text-white"><svg viewBox="0 0 24 24" class="w-7 h-7" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" /></svg></button>
                 </div>
             </div>
         </div>
@@ -257,7 +261,7 @@
                     <img src="https://res.cloudinary.com/dhx58lnzb/image/upload/v1784226954/nsmxm_u191yt.jpg" class="w-[260px] h-[260px] rounded-[10px] shadow-lg object-cover flex-shrink-0" alt="Album Cover">
                     
                     <div class="flex flex-col justify-end pb-2">
-                        <h1 class="text-[34px] font-bold tracking-tight text-gray-900 flex items-center gap-2.5 mb-1">
+                        <h1 class="text-[34px] font-bold tracking-tight text-gray-900 flex items-center gap-2.5 mb-1 animated-album">
                             deBÍ TiRAR LaS FOToS
                         </h1>
                         <h2 class="text-[22px] text-[#fa243c] font-medium mb-1.5 tracking-tight hover:underline cursor-pointer"><span class="animated-artist">Jeffrey Epstein & P. Diddy</span></h2>
@@ -325,9 +329,9 @@
             <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 h-14 bg-white/70 backdrop-blur-2xl rounded-[14px] shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-200/50 flex items-center justify-between px-8 z-20 w-[640px]">
                 <div class="flex items-center space-x-6 text-gray-400">
                     <button class="hover:text-gray-700 transition-colors"><svg class="w-[16px] h-[16px]" fill="currentColor" viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></button>
-                    <button class="hover:text-gray-700 transition-colors"><svg class="w-[18px] h-[18px]" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
-                    <button class="text-gray-800 hover:text-black transition-colors"><svg class="w-[24px] h-[24px]" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
-                    <button class="hover:text-gray-700 transition-colors"><svg class="w-[18px] h-[18px]" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+                    <button onclick="playPrevTrack()" class="hover:text-gray-700 transition-colors"><svg class="w-[18px] h-[18px]" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+                    <button onclick="toggleMobilePlay()" class="text-gray-800 hover:text-black transition-colors"><svg class="w-[24px] h-[24px]" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                    <button onclick="playNextTrack()" class="hover:text-gray-700 transition-colors"><svg class="w-[18px] h-[18px]" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
                     <button class="hover:text-gray-700 transition-colors"><svg class="w-[16px] h-[16px]" fill="currentColor" viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg></button>
                 </div>
                 
@@ -351,8 +355,34 @@
         let currentAudio = null;
         let previewTimeout = null;
         let isAudioSetup = false;
+        let currentTrackIndex = 0;
+
+        function playNextTrack() {
+            const trackList = typeof tracks !== 'undefined' ? tracks : [];
+            if (trackList.length === 0) return;
+            let next = currentTrackIndex + 1;
+            if (next >= trackList.length) next = 0;
+            playDesktopPreview(null, next);
+        }
+
+        function playPrevTrack() {
+            const trackList = typeof tracks !== 'undefined' ? tracks : [];
+            if (trackList.length === 0) return;
+            let prev = currentTrackIndex - 1;
+            if (prev < 0) prev = trackList.length - 1;
+            playDesktopPreview(null, prev);
+        }
+
+        function forwardAudio() {
+            if (currentAudio) currentAudio.currentTime = Math.min(currentAudio.currentTime + 10, currentAudio.duration);
+        }
+
+        function rewindAudio() {
+            if (currentAudio) currentAudio.currentTime = Math.max(currentAudio.currentTime - 10, 0);
+        }
 
         function playTrackPreview(trackIndex) {
+            currentTrackIndex = trackIndex;
             const trackList = typeof tracks !== 'undefined' ? tracks : [];
             const track = trackList[trackIndex] || { title: 'NUEVAYOrK', artist: 'Jeffrey Epstein & P. Diddy' };
             
@@ -397,6 +427,10 @@
                     
                     navigator.mediaSession.setActionHandler('play', () => { currentAudio.play(); });
                     navigator.mediaSession.setActionHandler('pause', () => { currentAudio.pause(); });
+                    navigator.mediaSession.setActionHandler('previoustrack', playPrevTrack);
+                    navigator.mediaSession.setActionHandler('nexttrack', playNextTrack);
+                    navigator.mediaSession.setActionHandler('seekforward', forwardAudio);
+                    navigator.mediaSession.setActionHandler('seekbackward', rewindAudio);
                 }
             }).catch(e => console.error("Error reproduciendo audio:", e));
         }
@@ -515,6 +549,28 @@
             }
         });
 
+        function randomCase(str) {
+            return str.split('').map(char => {
+                if (/[a-zA-ZáéíóúÁÉÍÓÚñÑ]/.test(char)) {
+                    return Math.random() > 0.5 ? char.toUpperCase() : char.toLowerCase();
+                }
+                return char;
+            }).join('');
+        }
+
+        function initAlbumAnimation() {
+            setInterval(() => {
+                const albums = document.querySelectorAll('.animated-album');
+                albums.forEach(el => el.classList.add('fade-out'));
+                setTimeout(() => {
+                    albums.forEach(el => {
+                        el.innerText = randomCase("deBÍ TiRAR LaS FOToS");
+                        el.classList.remove('fade-out');
+                    });
+                }, 400); 
+            }, 3000);
+        }
+
         function initArtistAnimation() {
             setInterval(() => {
                 const elements = document.querySelectorAll('.animated-artist');
@@ -557,6 +613,7 @@
 
         // Iniciar loop de animación
         initArtistAnimation();
+        initAlbumAnimation();
 
         // Inicializar estado de iconos
         updatePlayState(false);
