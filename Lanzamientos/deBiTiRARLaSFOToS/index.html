@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Apple Music Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* PC Track Selection Styles */
+        .pc-track.selected {
+            background-color: #d90015 !important;
+            border-color: transparent !important;
+        }
+        .pc-track.selected .text-gray-900,
+        .pc-track.selected .text-gray-500,
+        .pc-track.selected .text-gray-400,
+        .pc-track.selected .text-\[\#fa243c\] {
+            color: white !important;
+        }
+        .pc-track.selected .pc-track-explicit {
+            background-color: transparent !important;
+            border: 1px solid white;
+            color: white !important;
+        }
+        .pc-track.selected .pc-track-more {
+            opacity: 1 !important;
+            color: white !important;
+        }
+        .pc-track.selected:hover {
+            background-color: #d90015 !important;
+        }
+
+        .transition-all {
+            transition-property: all;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 300ms;
+        }
+
+        .animated-artist {
+            position: relative;
+            display: inline-block;
+            transition: opacity 0.4s ease-in-out;
+        }
+        .animated-artist::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            height: 1.5px;
+            background: currentColor;
+            width: 0%;
+            transition: width 0.4s ease-in-out;
+        }
+        .animated-artist.strike::after {
+            width: 100%;
+        }
+        .animated-artist.fade-out {
+            opacity: 0;
+        }
+
+        /* Colores por defecto para móvil (Tema Oscuro) */
+        body {
+            background: #0F1C17;
+            background: linear-gradient(180deg, #2b3a27 0%, #0F1C17 35%);
+            color: #ffffff;
+        }
+
+        /* Colores para PC (Tema Claro) */
+        @media (min-width: 768px) {
+            body {
+                background: #ffffff;
+                color: #1d1d1f;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen overflow-hidden">
+
+    <!-- ========================================================= -->
+    <!-- VISTA MÓVIL (Se oculta en PC - Diseño del primer request) -->
+    <!-- ========================================================= -->
+    <div class="md:hidden w-full max-w-[430px] mx-auto relative h-screen flex flex-col shadow-2xl bg-[#0F1C17]/50 overflow-hidden">
+        <!-- Status Bar -->
+        <div class="flex justify-between items-center px-6 pt-3 text-sm font-semibold tracking-wide z-10">
+            <div>12:10</div>
+            <div class="flex space-x-2 items-center">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"></path></svg>
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12.01 21.49L23.64 7c-.45-.34-4.93-4-11.64-4C5.28 3 .81 6.66.36 7l11.63 14.49.01.01.01-.01z"></path></svg>
+                <div class="flex items-center gap-1">
+                    <span class="text-xs">30%</span>
+                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M17 6h-2V4h-6v2H7c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM9 18v-8H7v8h2zm4 0v-8h-2v8h2zm4 0v-8h-2v8h2z"></path></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Header Controls -->
+        <div class="flex justify-between items-center px-4 mt-4 z-10">
+            <button class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md active:bg-white/20 transition-all">
+                <svg class="w-5 h-5 ml-[-2px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <div class="flex space-x-3">
+                <button class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md active:bg-white/20 transition-all">
+                    <svg class="w-4 h-4 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+                </button>
+                <button class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md active:bg-white/20 transition-all">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="1.5"></circle><circle cx="19" cy="12" r="1.5"></circle><circle cx="5" cy="12" r="1.5"></circle></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Contenido principal -->
+        <div class="flex-1 overflow-y-auto pb-40 relative z-10">
+            <!-- Portada -->
+            <div class="mt-4 px-8 flex justify-center">
+                <img id="mobile-album-cover" src="https://res.cloudinary.com/dhx58lnzb/image/upload/v1784226954/nsmxm_u191yt.jpg" class="w-full max-w-[280px] aspect-square rounded-xl shadow-2xl object-cover" />
+            </div>
+
+            <!-- Títulos e Info -->
+            <div class="text-center mt-6 px-4">
+                <h1 class="text-3xl font-bold tracking-tight">deBÍ TiRAR LaS FOToS</h1>
+                <h2 class="text-[17px] text-gray-200 mt-1"><span class="animated-artist">Jeffrey Epstein & P. Diddy</span></h2>
+                <div class="text-[10px] text-gray-400 mt-2 flex items-center justify-center space-x-1 font-semibold tracking-widest uppercase">
+                    <span>Latin</span><span>&middot;</span><span>2026</span><span>&middot;</span>
+                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6H7v6H5V7h4c1.66 0 3 1.34 3 3v7zm4 0h-2V7h2v10z"></path></svg>
+                    <span>Dolby Atmos</span><span>&middot;</span>
+                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+                    <span>Lossless</span>
+                </div>
+            </div>
+
+            <!-- Botones principales -->
+            <div class="flex justify-center items-center space-x-4 mt-6 px-6">
+                <button class="w-[46px] h-[46px] rounded-full bg-white/10 flex items-center justify-center active:bg-white/20 transition-all"><svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z" /></svg></button>
+                <button onclick="toggleMobilePlay()" class="flex-1 max-w-[180px] h-[46px] rounded-full bg-[#E5E5E5] text-black flex items-center justify-center space-x-2 font-bold text-[17px] active:scale-95 transition-all">
+                    <svg id="mobile-main-play-icon" viewBox="0 0 24 24" class="w-6 h-6" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                    <span id="mobile-main-play-text">Play</span>
+                </button>
+                <button class="w-[46px] h-[46px] rounded-full bg-white/10 flex items-center justify-center active:bg-white/20 transition-all"><svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+            </div>
+
+            <!-- Descripción -->
+            <div class="px-6 mt-6 text-[13px] text-gray-300 leading-snug">
+                Scores of Puerto Rican artists have used their music to express love and pride in their island <button class="text-white font-semibold ml-1">MORE</button>
+            </div>
+            <hr class="border-white/10 mx-6 mt-4 mb-2">
+
+            <!-- Lista de Canciones Móvil -->
+            <div class="px-2">
+                <div class="flex items-center justify-between px-4 py-3 hover:bg-white/5 rounded-lg cursor-pointer">
+                    <div class="flex items-center space-x-4"><span class="text-gray-400 font-medium w-4 text-right text-sm">1</span><span class="font-medium text-[16px] text-gray-100">NUEVAYOrK</span></div>
+                    <button class="text-gray-400 active:text-white"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="1.5"></circle><circle cx="19" cy="12" r="1.5"></circle><circle cx="5" cy="12" r="1.5"></circle></svg></button>
+                </div>
+                <div class="flex items-center justify-between px-4 py-3 hover:bg-white/5 rounded-lg cursor-pointer">
+                    <div class="flex items-center space-x-4"><span class="text-gray-400 font-medium w-4 text-right text-sm">2</span><div class="flex items-center gap-2"><span class="font-medium text-[16px] text-gray-100">VOY A LLEVARTE PA MI ISLA</span><span class="bg-gray-400 text-black text-[9px] font-bold px-1 rounded-[3px] h-[14px] flex items-center justify-center">E</span></div></div>
+                    <button class="text-gray-400 active:text-white"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="1.5"></circle><circle cx="19" cy="12" r="1.5"></circle><circle cx="5" cy="12" r="1.5"></circle></svg></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mini-Player Móvil -->
+        <div class="absolute bottom-[84px] left-2 right-2 z-20">
+            <div class="bg-[#2d3725] rounded-xl flex items-center justify-between p-2 shadow-2xl backdrop-blur-2xl border border-white/10">
+                <div class="flex items-center space-x-3 flex-1 overflow-hidden">
+                    <img src="https://res.cloudinary.com/dhx58lnzb/image/upload/v1784226954/nsmxm_u191yt.jpg" class="w-10 h-10 rounded-md object-cover shadow-sm">
+                    <div class="flex flex-col truncate">
+                        <span class="font-medium text-[15px] text-white truncate">NUEVAYOrK</span>
+                        <span class="text-[12px] text-gray-400 truncate"><span class="animated-artist">Jeffrey Epstein & P. Diddy</span></span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4 pr-3">
+                    <button onclick="toggleMobilePlay()" class="active:scale-90 transition-all text-white"><svg id="mobile-mini-play-icon" viewBox="0 0 24 24" class="w-7 h-7" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg></button>
+                    <button class="active:scale-90 transition-all text-white"><svg viewBox="0 0 24 24" class="w-7 h-7" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" /></svg></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="absolute bottom-0 left-0 right-0 h-[84px] bg-[#111710]/95 backdrop-blur-xl border-t border-white/5 z-20 pb-4">
+            <div class="flex justify-around items-center h-full px-2">
+                <button class="flex flex-col items-center space-y-1 text-gray-400 hover:text-white"><svg class="w-[26px] h-[26px]" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" /></svg><span class="text-[10px] font-medium">Home</span></button>
+                <button class="flex flex-col items-center space-y-1 text-gray-400 hover:text-white"><svg class="w-[26px] h-[26px]" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z" /></svg><span class="text-[10px] font-medium">New</span></button>
+                <button class="flex flex-col items-center space-y-1 text-gray-400 hover:text-white"><svg class="w-[26px] h-[26px]" viewBox="0 0 24 24" fill="currentColor"><path d="M3.24 6.15C2.51 6.43 2 7.17 2 8v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8c0-.83-.51-1.57-1.24-1.85L17.5 4H6.5l-3.26 2.15zM7 20H5v-2h2v2zm0-4H5v-2h2v2zm0-4H5v-2h2v2zm12 8h-9v-8h9v8z" /></svg><span class="text-[10px] font-medium">Radio</span></button>
+                <button class="flex flex-col items-center space-y-1 text-gray-400 hover:text-white"><svg class="w-[26px] h-[26px]" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 5h-3v5.5c0 1.38-1.12 2.5-2.5 2.5S10 13.88 10 12.5s1.12-2.5 2.5-2.5c.57 0 1.08.19 1.5.51V5h4v2zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6z" /></svg><span class="text-[10px] font-medium">Library</span></button>
+                <button class="flex flex-col items-center space-y-1 text-[#fc4a4f]"><div class="relative"><div class="absolute inset-0 bg-[#fc4a4f]/20 rounded-full scale-[1.3] blur-[2px]"></div><svg class="w-[26px] h-[26px] relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></div><span class="text-[10px] font-medium mt-[2px]">Search</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- VISTA ESCRITORIO PC (Se oculta en móvil - Diseño Nuevo)   -->
+    <!-- ========================================================= -->
+    <div class="hidden md:flex w-full h-screen bg-white text-[#1d1d1f] overflow-hidden font-sans">
+        <!-- Sidebar -->
+        <aside class="w-[260px] bg-[#f9f9f9] border-r border-gray-200 flex flex-col justify-between p-5 flex-shrink-0">
+            <div>
+                <!-- Logo Apple Music -->
+                <div class="flex items-center space-x-1.5 mb-6 text-black">
+                    <svg viewBox="0 0 384 512" class="w-[22px] h-[22px]"><path fill="currentColor" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.3 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.3zM250.8 131.3c21.8-26.8 46.3-50.2 44.7-88.3-36.9 1.8-64.9 20.2-82.3 46.6-21.5 32.8-29.2 60.1-27.4 87.7 34.3 2.7 43.1-19.2 65-46z"/></svg>
+                    <span class="text-[21px] font-semibold tracking-tight">Music</span>
+                </div>
+                
+                <!-- Buscador -->
+                <div class="bg-gray-200/70 rounded-md flex items-center px-2.5 py-1.5 mb-6">
+                    <svg class="w-3.5 h-3.5 text-[#fa243c] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <input type="text" placeholder="Buscar" class="bg-transparent border-none outline-none w-full text-sm text-[#fa243c] placeholder-[#fa243c]">
+                </div>
+
+                <!-- Menú -->
+                <nav class="space-y-3.5">
+                    <a href="#" class="flex items-center space-x-3 text-[13.5px] font-medium text-gray-700 hover:text-[#fa243c]">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                        <span>Inicio</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 text-[13.5px] font-medium text-gray-700 hover:text-[#fa243c]">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                        <span>Novedades</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-3 text-[13.5px] font-medium text-gray-700 hover:text-[#fa243c]">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span>Radio</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Footer Sidebar -->
+            <div>
+                <a href="#" class="flex items-center space-x-2 text-[12px] font-medium text-gray-500 hover:text-black mb-3">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    <span>Abrir en Música ↗</span>
+                </a>
+                <button class="w-full bg-[#e3001b] hover:bg-[#c90018] text-white py-1.5 rounded-md text-[13px] font-medium flex items-center justify-center space-x-2 transition-colors shadow-sm">
+                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    <span>Iniciar sesión</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col relative bg-white">
+            <!-- Iconos top right -->
+            <div class="absolute top-4 right-8 flex space-x-2 z-10">
+                <button class="w-[30px] h-[30px] rounded-[7px] border border-gray-200 bg-white shadow-sm flex items-center justify-center hover:bg-gray-50 text-gray-600 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                </button>
+                <button class="w-[30px] h-[30px] rounded-[7px] border border-gray-200 bg-white shadow-sm flex items-center justify-center hover:bg-gray-50 text-gray-600 transition-colors">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="19" cy="12" r="1.5"></circle></svg>
+                </button>
+            </div>
+
+            <!-- Scrollable Content -->
+            <div class="flex-1 overflow-y-auto pb-24 pt-12 px-10">
+                <!-- Info Álbum PC -->
+                <div class="flex gap-8 mb-10 max-w-[950px] mx-auto">
+                    <!-- Portada PC -->
+                    <img src="https://res.cloudinary.com/dhx58lnzb/image/upload/v1784226954/nsmxm_u191yt.jpg" class="w-[260px] h-[260px] rounded-[10px] shadow-lg object-cover flex-shrink-0" alt="Album Cover">
+                    
+                    <div class="flex flex-col justify-end pb-2">
+                        <h1 class="text-[34px] font-bold tracking-tight text-gray-900 flex items-center gap-2.5 mb-1">
+                            deBÍ TiRAR LaS FOToS
+                        </h1>
+                        <h2 class="text-[22px] text-[#fa243c] font-medium mb-1.5 tracking-tight hover:underline cursor-pointer"><span class="animated-artist">Jeffrey Epstein & P. Diddy</span></h2>
+                        <p class="text-[12px] text-gray-500 font-medium mb-7 uppercase tracking-wider">Latin · 2026</p>
+                        
+                        <p class="text-[14px] text-gray-500 leading-relaxed max-w-[550px] mb-7">
+                            Scores of Puerto Rican artists have used their music to express love and pride in their island <button class="text-black font-semibold hover:underline">MORE</button>
+                        </p>
+
+                        <div>
+                            <button onclick="playDesktopPreview(event, 0)" class="bg-black hover:bg-gray-800 text-white rounded-full py-2 px-5 text-[15px] font-semibold flex items-center space-x-2 transition-all active:scale-95">
+                                <svg class="w-[18px] h-[18px]" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                <span>Previsualizar</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lista de Canciones PC -->
+                <div class="max-w-[950px] mx-auto border-t border-gray-100 pt-1">
+                    <script>
+                        const tracks = [
+                            { num: 1, title: 'NUEVAYOrK', time: '3:03', explicit: false },
+                            { num: 2, title: 'VOY A LLEVARTE PA MI ISLA', time: '2:36', explicit: true },
+                            { num: 3, title: 'BAILE INoLVIDABLE', time: '6:07', explicit: true },
+                            { num: 4, title: 'PERFuMITO NUEVO', time: '3:20', explicit: true, artist: 'Bad Bunny, RaiNao' },
+                            { num: 5, title: 'WELTITA', time: '3:07', explicit: false, artist: 'Bad Bunny, Chuwi' },
+                            { num: 6, title: 'VeLDÁ', time: '3:55', explicit: true, artist: 'Bad Bunny, Omar Courtz, Dei V' },
+                            { num: 7, title: 'EL CLúB', time: '3:42', explicit: true },
+                            { num: 8, title: 'KETU TeCRÉ', time: '4:10', explicit: true },
+                            { num: 9, title: 'BOKeTE', time: '3:35', explicit: true },
+                            { num: 10, title: 'KLOuFRENS', time: '3:19', explicit: true }
+                        ];
+
+                        document.write(tracks.map((t, i) => `
+                            <div class="pc-track group flex items-center justify-between py-3 px-2 hover:bg-gray-50 rounded-md border-b border-gray-100/60 cursor-pointer select-none" data-index="${i}" onclick="handleTrackClick(event, ${i})">
+                                <div class="flex items-center flex-1">
+                                    <div class="w-6 text-right mr-5 font-medium flex justify-end items-center relative">
+                                        <div class="absolute left-[-15px] w-[5px] h-[5px] bg-gray-400 rounded-full pc-track-dot opacity-0 transition-opacity"></div>
+                                        <span class="text-[13px] text-gray-400 group-hover:hidden">${t.num}</span>
+                                        <svg onclick="playDesktopPreview(event, ${i})" class="hidden group-hover:block w-3 h-3 text-[#fa243c] fill-current hover:scale-125 transition-transform" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                    </div>
+                                    <div class="flex flex-col justify-center">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-[14px] font-medium text-gray-900">${t.title}</span>
+                                            ${t.explicit ? '<span class="pc-track-explicit bg-gray-400 text-white text-[9px] font-bold px-1 py-[1px] rounded-[3px]">E</span>' : ''}
+                                        </div>
+                                        ${t.artist ? `<span class="text-[12px] text-gray-500 mt-0.5">${t.artist}</span>` : ''}
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-6 text-[13px] font-medium">
+                                    <span class="text-gray-400 group-hover:hidden">${t.time}</span>
+                                    <span onclick="playDesktopPreview(event, ${i})" class="hidden group-hover:block text-[#fa243c] text-[10px] tracking-wider font-bold hover:underline">PREVISUALIZAR</span>
+                                    <button class="pc-track-more text-gray-400 hover:text-black opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="19" cy="12" r="1.5"></circle></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join(''));
+                    </script>
+                </div>
+            </div>
+
+            <!-- Player Inferior Flotante (Apple Music Web style) -->
+            <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 h-14 bg-white/70 backdrop-blur-2xl rounded-[14px] shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-200/50 flex items-center justify-between px-8 z-20 w-[640px]">
+                <div class="flex items-center space-x-6 text-gray-400">
+                    <button class="hover:text-gray-700 transition-colors"><svg class="w-[16px] h-[16px]" fill="currentColor" viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></button>
+                    <button class="hover:text-gray-700 transition-colors"><svg class="w-[18px] h-[18px]" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+                    <button class="text-gray-800 hover:text-black transition-colors"><svg class="w-[24px] h-[24px]" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                    <button class="hover:text-gray-700 transition-colors"><svg class="w-[18px] h-[18px]" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+                    <button class="hover:text-gray-700 transition-colors"><svg class="w-[16px] h-[16px]" fill="currentColor" viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg></button>
+                </div>
+                
+                <div class="text-gray-500 opacity-70">
+                    <svg viewBox="0 0 384 512" class="w-[18px] h-[18px]"><path fill="currentColor" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.3 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.3zM250.8 131.3c21.8-26.8 46.3-50.2 44.7-88.3-36.9 1.8-64.9 20.2-82.3 46.6-21.5 32.8-29.2 60.1-27.4 87.7 34.3 2.7 43.1-19.2 65-46z"/></svg>
+                </div>
+
+                <div class="flex items-center space-x-6 text-gray-400">
+                    <button class="hover:text-gray-700 transition-colors"><svg class="w-[16px] h-[16px]" fill="currentColor" viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/></svg></button>
+                    <button class="hover:text-gray-700 transition-colors"><svg class="w-[16px] h-[16px]" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Script para Funcionalidad de Audio -->
+    <script>
+        let currentArtistState = 0;
+        const artistNames = ['Jeffrey Epstein & P. Diddy', 'Dereck DFX'];
+        
+        let currentAudio = null;
+        let previewTimeout = null;
+
+        function playTrackPreview(trackIndex) {
+            const trackList = typeof tracks !== 'undefined' ? tracks : [];
+            const track = trackList[trackIndex] || { title: 'NUEVAYOrK', artist: 'Jeffrey Epstein & P. Diddy' };
+            const audioUrl = "https://res.cloudinary.com/dhx58lnzb/video/upload/v1784227778/Bad_Bunny_-_NUEVAYoL_Instrumental_-_TYPE_1_ow2h8e.mp3";
+            
+            if (currentAudio) {
+                if (!currentAudio.paused) {
+                    currentAudio.pause();
+                    return; // Pause if already playing and button is clicked again
+                }
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                clearTimeout(previewTimeout);
+            } else {
+                currentAudio = new Audio(audioUrl);
+                currentAudio.addEventListener('ended', () => updatePlayState(false));
+                currentAudio.addEventListener('pause', () => updatePlayState(false));
+                currentAudio.addEventListener('play', () => updatePlayState(true));
+            }
+            
+            currentAudio.play().then(() => {
+                // 30 seconds preview limit
+                previewTimeout = setTimeout(() => {
+                    if (currentAudio) {
+                        currentAudio.pause();
+                        currentAudio.currentTime = 0;
+                    }
+                }, 30000);
+                
+                // Integración con MediaSession API (Reproductor nativo del dispositivo)
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.metadata = new MediaMetadata({
+                        title: track.title,
+                        artist: track.artist || artistNames[currentArtistState],
+                        album: 'deBÍ TiRAR LaS FOToS',
+                        artwork: [
+                            { src: 'https://res.cloudinary.com/dhx58lnzb/image/upload/v1784226954/nsmxm_u191yt.jpg', sizes: '512x512', type: 'image/jpeg' }
+                        ]
+                    });
+                    
+                    navigator.mediaSession.setActionHandler('play', () => { currentAudio.play(); });
+                    navigator.mediaSession.setActionHandler('pause', () => { currentAudio.pause(); });
+                }
+            }).catch(e => console.error("Error reproduciendo audio:", e));
+        }
+
+        function playDesktopPreview(event, trackIndex) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            const actualIndex = trackIndex || 0;
+            
+            // Seleccionar visualmente la pista en la lista de PC
+            const trackElements = document.querySelectorAll('.pc-track');
+            if (trackElements && trackElements[actualIndex]) {
+                trackElements.forEach(t => t.classList.remove('selected'));
+                trackElements[actualIndex].classList.add('selected');
+                
+                // Actualizar los puntos de selección
+                document.querySelectorAll('.pc-track').forEach(t => {
+                    const dot = t.querySelector('.pc-track-dot');
+                    if (dot) {
+                        if (t.classList.contains('selected')) {
+                            dot.classList.remove('opacity-0');
+                            dot.classList.add('bg-white');
+                        } else {
+                            dot.classList.add('opacity-0');
+                            dot.classList.remove('bg-white');
+                        }
+                    }
+                });
+            }
+
+            playTrackPreview(actualIndex);
+        }
+
+        function toggleMobilePlay() {
+            if (currentAudio && !currentAudio.paused) {
+                currentAudio.pause();
+            } else {
+                playTrackPreview(0);
+            }
+        }
+
+        function updatePlayState(isPlaying) {
+            const mainIcon = document.getElementById('mobile-main-play-icon');
+            const mainText = document.getElementById('mobile-main-play-text');
+            const miniIcon = document.getElementById('mobile-mini-play-icon');
+            
+            const playPath = '<path d="M8 5v14l11-7z"/>';
+            const pausePath = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+
+            if (isPlaying) {
+                if (mainText) mainText.innerText = 'Pause';
+                if (mainIcon) mainIcon.innerHTML = pausePath;
+                if (miniIcon) miniIcon.innerHTML = pausePath;
+            } else {
+                if (mainText) mainText.innerText = 'Play';
+                if (mainIcon) mainIcon.innerHTML = playPath;
+                if (miniIcon) miniIcon.innerHTML = playPath;
+            }
+        }
+
+        // PC Track Selection Logic
+        let lastSelectedIndex = -1;
+        function handleTrackClick(e, index) {
+            e.preventDefault();
+            const tracks = document.querySelectorAll('.pc-track');
+            
+            if (e.metaKey || e.ctrlKey) {
+                tracks[index].classList.toggle('selected');
+                lastSelectedIndex = index;
+            } else if (e.shiftKey && lastSelectedIndex !== -1) {
+                if (!e.metaKey && !e.ctrlKey) {
+                    tracks.forEach(t => t.classList.remove('selected'));
+                }
+                const start = Math.min(lastSelectedIndex, index);
+                const end = Math.max(lastSelectedIndex, index);
+                for (let i = start; i <= end; i++) {
+                    tracks[i].classList.add('selected');
+                }
+            } else {
+                tracks.forEach(t => t.classList.remove('selected'));
+                tracks[index].classList.add('selected');
+                lastSelectedIndex = index;
+            }
+            updateSelectionDots();
+        }
+
+        function updateSelectionDots() {
+            document.querySelectorAll('.pc-track').forEach(t => {
+                const dot = t.querySelector('.pc-track-dot');
+                if (t.classList.contains('selected')) {
+                    dot.classList.remove('opacity-0');
+                    dot.classList.add('bg-white');
+                } else {
+                    dot.classList.add('opacity-0');
+                    dot.classList.remove('bg-white');
+                }
+            });
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a') {
+                e.preventDefault();
+                document.querySelectorAll('.pc-track').forEach(t => t.classList.add('selected'));
+                updateSelectionDots();
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.pc-track')) {
+                document.querySelectorAll('.pc-track').forEach(t => t.classList.remove('selected'));
+                updateSelectionDots();
+            }
+        });
+
+        function initArtistAnimation() {
+            setInterval(() => {
+                const elements = document.querySelectorAll('.animated-artist');
+                
+                // 1. Tachar
+                elements.forEach(el => el.classList.add('strike'));
+                
+                // 2. Desvanecer
+                setTimeout(() => {
+                    elements.forEach(el => el.classList.add('fade-out'));
+                    
+                    // 3. Cambiar texto y reaparecer
+                    setTimeout(() => {
+                        currentArtistState = (currentArtistState + 1) % 2;
+                        const newName = artistNames[currentArtistState];
+                        
+                        elements.forEach(el => {
+                            el.innerText = newName;
+                            el.classList.remove('strike');
+                            el.classList.remove('fade-out');
+                        });
+                        
+                        // Actualizar MediaSession si el reproductor está activo
+                        if ('mediaSession' in navigator && navigator.mediaSession.metadata) {
+                            const meta = navigator.mediaSession.metadata;
+                            // Solo actualizar si el artista actual en el reproductor es uno de los animados
+                            if (artistNames.includes(meta.artist)) {
+                                navigator.mediaSession.metadata = new MediaMetadata({
+                                    title: meta.title,
+                                    artist: newName,
+                                    album: meta.album,
+                                    artwork: meta.artwork
+                                });
+                            }
+                        }
+                    }, 400); // Esperar desvanecimiento
+                }, 400); // Esperar tachado
+            }, 5000); // Cada 5 segundos
+        }
+
+        // Iniciar loop de animación
+        initArtistAnimation();
+
+        // Inicializar estado de iconos
+        updatePlayState(false);
+    </script>
+</body>
+</html>
