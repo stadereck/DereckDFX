@@ -91,18 +91,9 @@
     <!-- VISTA MÓVIL (Se oculta en PC - Diseño del primer request) -->
     <!-- ========================================================= -->
     <div class="md:hidden w-full max-w-[430px] mx-auto relative h-screen flex flex-col shadow-2xl bg-[#0F1C17]/50 overflow-hidden">
-        <!-- Status Bar -->
-        <div class="flex justify-between items-center px-6 pt-3 text-sm font-semibold tracking-wide z-10">
-            <div>12:10</div>
-            <div class="flex space-x-2 items-center">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"></path></svg>
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12.01 21.49L23.64 7c-.45-.34-4.93-4-11.64-4C5.28 3 .81 6.66.36 7l11.63 14.49.01.01.01-.01z"></path></svg>
-                <div class="flex items-center gap-1">
-                    <span class="text-xs">30%</span>
-                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M17 6h-2V4h-6v2H7c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM9 18v-8H7v8h2zm4 0v-8h-2v8h2zm4 0v-8h-2v8h2z"></path></svg>
-                </div>
-            </div>
-        </div>
+        <!-- Status Bar Eliminada según requerimiento -->
+        <audio id="main-audio-player" src="https://res.cloudinary.com/dhx58lnzb/video/upload/v1784227778/Bad_Bunny_-_NUEVAYoL_Instrumental_-_TYPE_1_ow2h8e.mp3" preload="none"></audio>
+
 
         <!-- Header Controls -->
         <div class="flex justify-between items-center px-4 mt-4 z-10">
@@ -359,25 +350,29 @@
         
         let currentAudio = null;
         let previewTimeout = null;
+        let isAudioSetup = false;
 
         function playTrackPreview(trackIndex) {
             const trackList = typeof tracks !== 'undefined' ? tracks : [];
             const track = trackList[trackIndex] || { title: 'NUEVAYOrK', artist: 'Jeffrey Epstein & P. Diddy' };
-            const audioUrl = "https://res.cloudinary.com/dhx58lnzb/video/upload/v1784227778/Bad_Bunny_-_NUEVAYoL_Instrumental_-_TYPE_1_ow2h8e.mp3";
             
-            if (currentAudio) {
-                if (!currentAudio.paused) {
-                    currentAudio.pause();
-                    return; // Pause if already playing and button is clicked again
-                }
-                currentAudio.pause();
-                currentAudio.currentTime = 0;
-                clearTimeout(previewTimeout);
-            } else {
-                currentAudio = new Audio(audioUrl);
+            if (!currentAudio) {
+                currentAudio = document.getElementById('main-audio-player');
                 currentAudio.addEventListener('ended', () => updatePlayState(false));
                 currentAudio.addEventListener('pause', () => updatePlayState(false));
                 currentAudio.addEventListener('play', () => updatePlayState(true));
+            }
+
+            if (currentAudio) {
+                if (!currentAudio.paused) {
+                    currentAudio.pause();
+                    return; // Pause if already playing
+                }
+                currentAudio.pause();
+                try {
+                    currentAudio.currentTime = 0;
+                } catch(e) {}
+                clearTimeout(previewTimeout);
             }
             
             currentAudio.play().then(() => {
